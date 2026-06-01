@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyMind — Apuntes Colectivos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #0c0d10;
+      --surface: #13151a;
+      --surface2: #1c1f27;
+      --border: #2a2d38;
+      --accent: #6ee7b7;
+      --accent2: #818cf8;
+      --accent3: #f472b6;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --danger: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* BG grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(110,231,183,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(110,231,183,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow blob */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(129,140,248,.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      background: rgba(12,13,16,.8);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: -0.03em;
+    }
+    .logo span { color: var(--accent); }
+
+    .badge {
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .25rem .7rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.04em;
+      margin-bottom: 1rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(110,231,183,.04);
+    }
+    .upload-zone input { display: none; }
+
+    .upload-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 1rem;
+      background: var(--surface2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .upload-zone h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: .4rem;
+    }
+    .upload-zone p {
+      color: var(--muted);
+      font-size: .875rem;
+    }
+
+    .author-input {
+      margin-top: 1.2rem;
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .author-input input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      padding: .6rem 1rem;
+      width: 220px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .author-input input:focus { border-color: var(--accent); }
+    .author-input input::placeholder { color: var(--muted); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .65rem 1.4rem;
+      border-radius: 8px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0c0d10;
+      font-weight: 600;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: .88; }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+    .btn-outline-accent2 {
+      background: transparent;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+    }
+    .btn-outline-accent2:hover:not(:disabled) { background: rgba(129,140,248,.1); }
+
+    .btn-outline-accent3 {
+      background: transparent;
+      color: var(--accent3);
+      border: 1px solid var(--accent3);
+    }
+    .btn-outline-accent3:hover:not(:disabled) { background: rgba(244,114,182,.1); }
+
+    /* Files list */
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .files-list {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      margin-bottom: 2rem;
+    }
+
+    .file-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      animation: slideIn .25s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .file-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .file-info { flex: 1; min-width: 0; }
+    .file-info strong {
+      display: block;
+      font-size: .875rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-info small { color: var(--muted); font-size: .75rem; }
+
+    .file-remove {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: .25rem;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .file-remove:hover { color: var(--danger); }
+
+    /* Action bar */
+    .action-bar {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Output card */
+    .output-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      animation: fadeUp .3s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .output-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .output-header-left {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .output-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-green { background: var(--accent); }
+    .dot-purple { background: var(--accent2); }
+    .dot-pink { background: var(--accent3); }
+
+    .output-label {
+      font-family: 'Syne', sans-serif;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .output-body {
+      padding: 1.5rem;
+      font-size: .925rem;
+      line-height: 1.7;
+      color: #cbd5e1;
+    }
+    .output-body h1, .output-body h2, .output-body h3 {
+      font-family: 'Syne', sans-serif;
+      color: var(--text);
+      margin: 1rem 0 .4rem;
+    }
+    .output-body ul, .output-body ol { padding-left: 1.4rem; margin: .5rem 0; }
+    .output-body li { margin: .3rem 0; }
+    .output-body strong { color: var(--accent); font-weight: 600; }
+    .output-body em { color: var(--accent2); }
+    .output-body code {
+      background: var(--surface2);
+      padding: .1em .35em;
+      border-radius: 4px;
+      font-size: .85em;
+    }
+
+    /* Questions */
+    .questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+
+    .question-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .question-q {
+      padding: .9rem 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      transition: background .15s;
+      user-select: none;
+    }
+    .question-q:hover { background: rgba(255,255,255,.03); }
+
+    .q-num {
+      font-family: 'Syne', sans-serif;
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--accent2);
+      background: rgba(129,140,248,.12);
+      padding: .15rem .45rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+
+    .q-chevron {
+      margin-left: auto;
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: transform .2s;
+      font-size: .9rem;
+    }
+    .question-item.open .q-chevron { transform: rotate(180deg); }
+
+    .question-a {
+      display: none;
+      padding: 0 1.1rem 1rem 2.8rem;
+      font-size: .875rem;
+      color: #94a3b8;
+      line-height: 1.65;
+      border-top: 1px solid var(--border);
+      padding-top: .75rem;
+    }
+    .question-item.open .question-a { display: block; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(110,231,183,.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      color: var(--muted);
+      font-size: .9rem;
+      padding: 1rem 1.25rem;
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1.2rem;
+      font-size: .875rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      z-index: 100;
+      animation: toastIn .3s ease;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .tab {
+      padding: .65rem 1.2rem;
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .action-bar { flex-direction: column; }
+      .btn { justify-content: center; }
+      header { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Study<span>Mind</span></div>
+  <div class="badge">⚡ IA Colectiva</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Apuntes del curso,<br/><em>analizados por IA</em></h1>
+    <p>Sube tus apuntes, la IA los resume y genera preguntas de repaso para toda la clase.</p>
+  </div>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" />
+    <div class="upload-icon">📎</div>
+    <h3>Arrastra archivos aquí o haz clic</h3>
+    <p>PDF, TXT, Markdown, Imágenes · Máx. 10 MB por archivo</p>
+    <div class="author-input">
+      <input type="text" id="authorName" placeholder="Tu nombre (ej: María García)" />
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+        + Añadir archivos
+      </button>
+    </div>
+  </div>
+
+  <!-- Files list -->
+  <div id="filesSection" style="display:none; margin-top:1.5rem;">
+    <div class="section-title">Archivos cargados</div>
+    <div class="files-list" id="filesList"></div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="action-bar" id="actionBar" style="margin-top:1.5rem;">
+    <button class="btn btn-primary" id="btnSummarize" disabled onclick="runSummary()">
+      🧠 Resumir apuntes
+    </button>
+    <button class="btn btn-outline-accent2" id="btnQuestions" disabled onclick="runQuestions()">
+      ❓ Generar preguntas
+    </button>
+    <button class="btn btn-outline-accent3" id="btnFlash" disabled onclick="runFlashcards()">
+      🃏 Tarjetas de estudio
+    </button>
+    <button class="btn btn-secondary" onclick="clearAll()">
+      🗑 Limpiar todo
+    </button>
+  </div>
+
+  <!-- Output area -->
+  <div id="outputArea"></div>
+</main>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────
+  let files = [];
+
+  // ── Drag & Drop ────────────────────────────────────────────────────────
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFiles([...e.dataTransfer.files]);
+  });
+  fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+
+  function handleFiles(newFiles) {
+    newFiles.forEach(f => {
+      if (!files.find(x => x.name === f.name)) files.push(f);
+    });
+    renderFiles();
+    fileInput.value = '';
+  }
+
+  function renderFiles() {
+    const section = document.getElementById('filesSection');
+    const list = document.getElementById('filesList');
+    const btns = ['btnSummarize','btnQuestions','btnFlash'];
+
+    if (files.length === 0) {
+      section.style.display = 'none';
+      btns.forEach(id => document.getElementById(id).disabled = true);
+      return;
+    }
+
+    section.style.display = 'block';
+    btns.forEach(id => document.getElementById(id).disabled = false);
+
+    list.innerHTML = files.map((f, i) => `
+      <div class="file-item">
+        <div class="file-icon">${fileIcon(f.name)}</div>
+        <div class="file-info">
+          <strong>${f.name}</strong>
+          <small>${formatSize(f.size)}</small>
+        </div>
+        <button class="file-remove" onclick="removeFile(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removeFile(i) { files.splice(i, 1); renderFiles(); }
+  function clearAll() { files = []; renderFiles(); document.getElementById('outputArea').innerHTML = ''; }
+
+  function fileIcon(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '📄';
+    if (['png','jpg','jpeg','webp'].includes(ext)) return '🖼️';
+    if (['md','txt'].includes(ext)) return '📝';
+    return '📎';
+  }
+
+  function formatSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/1024/1024).toFixed(1) + ' MB';
+  }
+
+  // ── Read file content ─────────────────────────────────────────────────
+  async function readFile(file) {
+    return new Promise((resolve, reject) => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const isImage = ['png','jpg','jpeg','webp'].includes(ext);
+
+      const reader = new FileReader();
+      if (isImage) {
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve({ type: 'image', name: file.name, data: reader.result });
+      } else {
+        reader.readAsText(file);
+        reader.onload = () => resolve({ type: 'text', name: file.name, data: reader.result });
+      }
+      reader.onerror = reject;
+    });
+  }
+
+  // ── Build Anthropic messages ──────────────────────────────────────────
+  async function buildContent(task) {
+    const author = document.getElementById('authorName').value.trim() || 'Estudiante';
+    const fileContents = await Promise.all(files.map(readFile));
+
+    let content = [];
+
+    fileContents.forEach(f => {
+      if (f.type === 'image') {
+        const [meta, b64] = f.data.split(',');
+        const mime = meta.match(/:(.*?);/)[1];
+        content.push({ type: 'image', source: { type: 'base64', media_type: mime, data: b64 } });
+        content.push({ type: 'text', text: `[Imagen adjunta: ${f.name}]` });
+      } else {
+        content.push({ type: 'text', text: `--- Archivo: ${f.name} ---\n${f.data}\n--- Fin de ${f.name} ---` });
+      }
+    });
+
+    const prompts = {
+      summary: `Eres un tutor experto. El alumno "${author}" ha subido los siguientes apuntes. 
+Por favor:
+1. Haz un **resumen estructurado** con los conceptos clave en secciones claras con títulos
+2. Destaca los puntos más importantes en negrita
+3. Incluye una sección "💡 Ideas clave" al final con los 5 conceptos más relevantes
+
+Usa formato Markdown. Sé conciso pero completo.`,
+
+      questions: `Eres un profesor evaluador. Basándote en los apuntes adjuntos del alumno "${author}":
+Genera exactamente 8 preguntas de estudio en formato JSON estricto.
+Responde SOLO con este JSON sin backticks ni texto extra:
+{"questions":[{"q":"pregunta aquí","a":"respuesta completa aquí"},...]}
+
+Las preguntas deben cubrir los conceptos principales. Las respuestas deben ser explicativas.`,
+
+      flashcards: `Eres un tutor de memorización. Basándote en los apuntes de "${author}":
+Crea 10 tarjetas de estudio (flashcards) en formato JSON estricto.
+Responde SOLO con este JSON sin backticks ni texto extra:
+{"cards":[{"front":"concepto o término","back":"definición o explicación breve"},...]}
+
+Cubre los términos y conceptos más importantes.`
+    };
+
+    content.push({ type: 'text', text: prompts[task] });
+    return content;
+  }
+
+  // ── Call Anthropic API ────────────────────────────────────────────────
+  async function callClaude(task) {
+    const content = await buildContent(task);
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Error ${response.status}`);
+    }
+
+    const data = await response.json(
